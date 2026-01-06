@@ -81,6 +81,7 @@ class DatasetGenerator:
         
         return train_dataset, val_dataset, test_dataset
     
+# OPDRACHT: Implementeer de klasse BalancedDataset en pas deze toe, om de data te balanceren.
 
     
 class BasicDataset(Dataset):

@@ -72,7 +72,7 @@ De basis is echter incompleet. De volgende uitbreidingen aan de oplossing zijn n
    - Toon de algehele prestatie (bijvoorbeeld over de verschillende epochs).
    - Toon de prestaties per klasse (tenminste precision, recall, f1-score, confusion matrix). 
 4. Implementeer de klasse BalancedDataset en pas deze toe, om de data te balanceren.
-5. Verwerk de resultaten in een (Jupiter Notebook) rapport. Beschrijft hierin jouw onderzoek, inclusief resultaten, visualisaties en conclusies.
+5. Verwerk de resultaten in een (Jupiter Notebook) rapport. Beschrijft hierin kort het onderzoek dat nodig was voor deze automatisering, inclusief resultaten, visualisaties en conclusies.
 
 De volgende uitbreidingen zijn mogelijk voor deze opdracht:
 

@@ -178,3 +178,7 @@ class AlexNetTrainer:
         
         return val_loss, val_acc
 
+
+# OPDRACHT: Implementeer de klasse AlexNet, om de classifiatie uit te kunnen voeren.
+
+
