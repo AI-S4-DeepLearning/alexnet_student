@@ -66,16 +66,16 @@ Het doel van deze opdracht is om de controle van aandoeningen van tomatenplanten
 - main.ipynb: Uitvoer en analyse van de oplossing.
 
 De basis is echter incompleet. De volgende uitbreidingen aan de oplossing zijn nog vereist:
-1. Implementeer de klasse AlexNet, om de classifiatie uit te kunnen voeren.
-2. Kies goede parameterwaarden om grid search over uit te voeren.
-3. Implementeer verschillende plotfuncties en pas deze toe. 
+1. Implementeer de klasse AlexNet in alexnettrainer.py, om de classifiatie uit te kunnen voeren.
+2. Kies in main.ipynb goede parameterwaarden om grid search over uit te voeren.
+3. Implementeer verschillende plotfuncties in resltplotter.py en pas deze toe. 
    - Toon de algehele prestatie (bijvoorbeeld over de verschillende epochs).
    - Toon de prestaties per klasse (tenminste precision, recall, f1-score, confusion matrix). 
-4. Implementeer de klasse BalancedDataset en pas deze toe, om de data te balanceren.
+4. De gegeven dataset is niet gebalanceerd. De minder vertegenwoordigde ziekten zullen waarschijnlijk minder goed voorspeld worden. Implementeer de klasse BalancedDataset in datasetgenerator.py en pas deze toe, om de data te balanceren en de prestaties van je model te verhogen.
 5. Verwerk de resultaten in een (Jupiter Notebook) rapport. Beschrijft hierin kort het onderzoek dat nodig was voor deze automatisering, inclusief resultaten, visualisaties en conclusies.
 
 De volgende uitbreidingen zijn mogelijk voor deze opdracht:
 
-5. (optioneel) Analyseer de data (bijvoorbeeld met Gradient-weighted Class Activation Mapping). Gebruik de resultaten om beter uit te kunnen leggen waarom sommige misclassificaties voorkomen. Bedenk zelf hoe.
-6. (optioneel 2) Bedenk en implementeer een significante verbetering van de efficientie van de pipeline, onderbouw, onderzoek en documenteer de verbeteringen.
-7. (optioneel 3) Bedenk en implementeer zelf nog een verbetering voor de oplossing.
+6. (optioneel) Analyseer de data (bijvoorbeeld met Gradient-weighted Class Activation Mapping). Gebruik de resultaten om beter uit te kunnen leggen waarom sommige misclassificaties voorkomen. Bedenk zelf hoe.
+7. (optioneel 2) Bedenk en implementeer een significante verbetering van de efficientie van de pipeline, onderbouw, onderzoek en documenteer de verbeteringen.
+8. (optioneel 3) Bedenk en implementeer zelf nog een verbetering voor de oplossing.

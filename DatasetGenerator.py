@@ -47,6 +47,8 @@ class DatasetGenerator:
         """
         train_ds, val_ds, test_ds = self.get_basic_splits(train_ratio, val_ratio)
         
+        # De "gebalanceerde" datasets zijn eigenlijk gewoon nog BasicDatasets, ongebalanceerd dus. 
+        # Pas hier de gebalanceerde dataset toe.
         train_dataset = BasicDataset(train_ds, self.img_size)
         val_dataset = BasicDataset(val_ds, self.img_size)
         test_dataset = BasicDataset(test_ds, self.img_size)
