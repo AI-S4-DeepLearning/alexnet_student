@@ -5,7 +5,6 @@ from torchvision import transforms
 import numpy as np
 from pathlib import Path
 
-
 class DatasetGenerator:
     """
     Class for loading an ImageFolder dataset and generating
@@ -42,20 +41,37 @@ class DatasetGenerator:
             min_class_size (int): Minimum number of samples per class.
 
         Returns:
-            tuple: A tuple containing the training, validation,
-                and test datasets.
+            tuple: A tuple containing the training, validation, and test datasets with balancing.
         """
-        train_ds, val_ds, test_ds = self.get_basic_splits(train_ratio, val_ratio)
+        train_dataset, val_dataset, test_dataset = self.get_basic_splits(train_ratio, val_ratio)
+        train_dataset = BalancedDataset(train_dataset.base_dataset, min_class_size, self.classes, self.img_size)
         
-        # De "gebalanceerde" datasets zijn eigenlijk gewoon nog BasicDatasets, ongebalanceerd dus. 
-        # Pas hier de gebalanceerde dataset toe.
+        return train_dataset, val_dataset, test_dataset
+    
+    def get_basic_splits(self, train_ratio: float, val_ratio: float):
+        """
+        Create train/validation/test splits with class balancing.
+
+        Underrepresented classes in the training split can be augmented
+        up to a minimum class size.
+
+        Args:
+            train_ratio (float): Fraction of the dataset assigned to training.
+            val_ratio (float): Fraction assigned to validation.
+            min_class_size (int): Minimum number of samples per class.
+
+        Returns:
+            tuple: A tuple containing the training, validation, and test datasets with basic transformation.
+        """
+        train_ds, val_ds, test_ds = self.__split(train_ratio, val_ratio)
+        
         train_dataset = BasicDataset(train_ds, self.img_size)
         val_dataset = BasicDataset(val_ds, self.img_size)
         test_dataset = BasicDataset(test_ds, self.img_size)
         
         return train_dataset, val_dataset, test_dataset
         
-    def get_basic_splits(self, train_ratio: float, val_ratio: float):
+    def __split(self, train_ratio: float, val_ratio: float):
         """
         Create train/validation/test splits without augmentation.
 
@@ -85,6 +101,8 @@ class DatasetGenerator:
     
 # OPDRACHT: Implementeer de klasse BalancedDataset en pas deze toe, om de data te balanceren.
 
+class BalancedDataset(Dataset):
+    pass
     
 class BasicDataset(Dataset):
     """
