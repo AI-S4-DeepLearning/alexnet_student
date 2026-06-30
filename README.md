@@ -13,7 +13,7 @@ Voor de productie van 10 kilo tomaten zijn zo'n twee planten nodig. Voor de ruim
 
 
 ## Data
-Er zijn in totaal 18.159 foto's verzameld van bladeren van tomatenplanten. Deze data is te downloaden van [Canvas](https://canvas.hu.nl/courses/47169/files/folder/opdrachten/AlexNet?preview=6116015). Pak de zip uit en plaats de datamap in de root van dit project. De 15.225 foto's zijn verdeeld over 10 categorieën:
+Er zijn in totaal 15.225 foto's verzameld van bladeren van tomatenplanten. Deze data is te downloaden van [Canvas](https://canvas.hu.nl/courses/47169/files/folder/opdrachten/AlexNet?preview=6116015). Pak de zip uit en plaats de datamap in de root van dit project. De 15.225 foto's zijn verdeeld over 10 categorieën:
 
 
 1. Bacterievlekkenziekte
