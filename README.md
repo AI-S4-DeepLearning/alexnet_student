@@ -67,7 +67,7 @@ Het doel van deze opdracht is om de controle van aandoeningen van tomatenplanten
 
 De basis is echter incompleet. De volgende uitbreidingen aan de oplossing zijn nog vereist:
 1. Implementeer de klasse AlexNet in alexnettrainer.py, om de classifiatie uit te kunnen voeren.
-2. Implementeer verschillende plotfuncties in plotter.py en pas deze toe. 
+2. Implementeer verschillende plotfuncties in plotter.py en pas deze toe in main.py. 
    - Toon de verdeling van de verschillende klassen
    - Toon de algehele prestatie (bijvoorbeeld over de verschillende epochs).
    - Toon de prestaties per klasse (tenminste precision, recall, f1-score, confusion matrix)
