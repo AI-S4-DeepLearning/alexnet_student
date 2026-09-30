@@ -1,150 +1,184 @@
 import torch
-from torchvision.datasets import ImageFolder
-from torch.utils.data import Dataset, random_split
-from torchvision import transforms
+import torch.nn as nn
+import torch.optim as optim
 import numpy as np
-from pathlib import Path
+from tqdm import tqdm
+from torch.utils.data import DataLoader, Dataset
 
-class DatasetGenerator:
+
+class AlexNetTrainer:
     """
-    Class for loading an ImageFolder dataset and generating
-    train/validation/test datasets.
+    Class that handles training, validation, and evaluation of an AlexNet model.
 
     Attributes:
-        seed (int): Random seed used for deterministic splitting.
-        data_dir (Path): Path to the dataset root directory.
-        img_size (int): Target image size for resizing operations.
-        full_dataset (ImageFolder): Complete dataset loaded from disk.
-        classes (list[str]): List of class names.
-        class_to_idx (dict): Mapping from class names to integer labels.
-        num_classes (int): Number of distinct classes.
+        num_classes (int): Number of output classes.
+        learning_rate (float): Learning rate used by the optimizer.
+        dropout_rate (float): Dropout probability applied inside the model.
+        batch_size (int): Batch size for training.
+        device (str): Device on which the model is executed (e.g., "cuda" or "cpu").
+        model (nn.Module): The AlexNet model instance being trained.
+        criterion (nn.Module): Loss function used for optimization.
+        optimizer (torch.optim.Optimizer): Optimizer for updating model weights.
+        history (dict): Logs containing per-epoch training and validation metrics.
     """
-    def __init__(self, seed: int, data_dir: Path, img_size: int):
-        self.seed = seed
-        self.data_dir = Path(data_dir)
-        self.img_size = img_size        
-        self.full_dataset = ImageFolder(root=self.data_dir)
-        self.classes = self.full_dataset.classes
-        self.class_to_idx = self.full_dataset.class_to_idx
-        self.num_classes = len(self.classes)
+    def __init__(self, num_classes: int, learning_rate: float, batch_size: int, dropout_rate: float, device: str):
+        self.num_classes = num_classes
+        self.learning_rate = learning_rate
+        self.dropout_rate = dropout_rate
+        self.batch_size = batch_size
+        self.device = device
+        
+        self.model = AlexNet(num_classes, self.dropout_rate)
+        self.model = self.model.to(device)
+        
+        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+        
+        self.history = {
+            'train_loss': [], 'train_acc': [],
+            'val_loss': [], 'val_acc': []
+        }
     
-    def get_balanced_splits(self, train_ratio: float, val_ratio: float, min_class_size: int):
+    def fit(self, train_dataset: Dataset, val_dataset: Dataset, batch_size: int, epochs: int):
         """
-        Create train/validation/test splits with class balancing.
-
-        Underrepresented classes in the training split can be augmented
-        up to a minimum class size.
+        Train the model for multiple epochs.
 
         Args:
-            train_ratio (float): Fraction of the dataset assigned to training.
-            val_ratio (float): Fraction assigned to validation.
-            min_class_size (int): Minimum number of samples per class.
+            train_dataset (Dataset): The training set.
+            val_dataset (Dataset): The validation set.
+            batch_size (int): Batch size for training.
+            epochs (int): Number of epochs to train.
 
         Returns:
-            tuple: A tuple containing the training, validation, and test datasets with balancing.
+            None
         """
-        train_dataset, val_dataset, test_dataset = self.get_basic_splits(train_ratio, val_ratio)
-        train_dataset = BalancedDataset(train_dataset.base_dataset, min_class_size, self.classes, self.img_size)
-        
-        return train_dataset, val_dataset, test_dataset
-    
-    def get_basic_splits(self, train_ratio: float, val_ratio: float):
-        """
-        Create train/validation/test splits with class balancing.
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
-        Underrepresented classes in the training split can be augmented
-        up to a minimum class size.
+        for epoch in range(epochs):
+            print(f"\nEpoch {epoch+1}/{epochs}")
+            print("-" * 100)
+            
+            train_loss, train_acc = self.train(train_loader)            
+            val_loss, val_acc = self.validate(val_loader)
+            
+            self.history['train_loss'].append(train_loss)
+            self.history['train_acc'].append(train_acc)
+            self.history['val_loss'].append(val_loss)
+            self.history['val_acc'].append(val_acc)
+            
+            print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+            print(f"Val Loss:   {val_loss:.4f}, Val Acc:   {val_acc:.2f}%")
+    
+    def evaluate(self, test_ds: Dataset, batch_size: int):
+        """
+        Evaluate the trained model on a test dataset.
 
         Args:
-            train_ratio (float): Fraction of the dataset assigned to training.
-            val_ratio (float): Fraction assigned to validation.
-            min_class_size (int): Minimum number of samples per class.
+            test_ds (Dataset): Test dataset supplying test batches.
+            batch_size (int): Batch size for testing.
 
         Returns:
-            tuple: A tuple containing the training, validation, and test datasets with basic transformation.
+            tuple: A tuple ``(labels, predictions, accuracy)`` where:
+                - labels (list[int]): Ground-truth labels.
+                - predictions (list[int]): Model predictions.
+                - accuracy (float): Percentage of correct predictions.
         """
-        train_ds, val_ds, test_ds = self.__split(train_ratio, val_ratio)
+        self.model.eval()
+        all_preds = []
+        all_labels = []
+
+        test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=4)
         
-        train_dataset = BasicDataset(train_ds, self.img_size)
-        val_dataset = BasicDataset(val_ds, self.img_size)
-        test_dataset = BasicDataset(test_ds, self.img_size)
+        with torch.no_grad():
+            for images, labels in tqdm(test_loader, desc='Evaluating'):
+                images = images.to(self.device)
+                outputs = self.model(images)
+                _, predicted = outputs.max(1)
+                
+                all_preds.extend(predicted.cpu().numpy())
+                all_labels.extend(labels.numpy())
         
-        return train_dataset, val_dataset, test_dataset
-        
-    def __split(self, train_ratio: float, val_ratio: float):
+        accuracy = 100 * np.mean(np.array(all_preds) == np.array(all_labels))
+
+        return all_labels, all_preds, accuracy
+            
+    def train(self, train_loader: DataLoader):
         """
-        Create train/validation/test splits without augmentation.
+        Perform a single training epoch.
 
         Args:
-            train_ratio (float): Fraction of the dataset assigned to training.
-            val_ratio (float): Fraction assigned to validation.
+            train_loader (DataLoader): DataLoader supplying training batches.
 
         Returns:
-            tuple: The train, validation, and test subsets produced by
-                ``torch.utils.data.random_split``.
+            tuple: A tuple ``(epoch_loss, epoch_acc)`` containing the average
+                loss and accuracy for the epoch.
         """
-        self.classes = self.full_dataset.classes
-        self.num_classes = len(self.classes)
+        self.model.train()
+        running_loss = 0.0
+        correct = 0
+        total = 0
         
-        total_size = len(self.full_dataset)
-        train_size = int(train_ratio * total_size)
-        val_size = int(val_ratio * total_size)
-        test_size = total_size - train_size - val_size
+        pbar = tqdm(train_loader, desc='Training')
+        for images, labels in pbar:
+            images, labels = images.to(self.device), labels.to(self.device)
+            
+            self.optimizer.zero_grad()
+            outputs = self.model(images)
+            loss = self.criterion(outputs, labels)
+            
+            loss.backward()
+            self.optimizer.step()
+            
+            running_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+            
+            pbar.set_postfix({
+                'loss': running_loss / (pbar.n + 1),
+                'acc': 100 * correct / total
+            })
         
-        train_dataset, val_dataset, test_dataset = random_split(
-            self.full_dataset, 
-            [train_size, val_size, test_size],
-            generator=torch.Generator().manual_seed(self.seed)
-        )
+        epoch_loss = running_loss / len(train_loader)
+        epoch_acc = 100 * correct / total
         
-        return train_dataset, val_dataset, test_dataset
+        return epoch_loss, epoch_acc
     
-# OPDRACHT: Implementeer de klasse BalancedDataset en pas deze toe, om de data te balanceren.
-
-class BalancedDataset(Dataset):
-    pass
-    
-class BasicDataset(Dataset):
-    """
-    Dataset wrapper that applies resizing, tensor conversion, and
-    normalization to images without any augmentation.
-
-    Attributes:
-        base_dataset (Dataset): The underlying dataset providing (image, label) pairs.
-        transform (callable): Transformation pipeline applied to each image.
-    """
-    def __init__(self, base_dataset: Dataset, img_size: int):
-        self.base_dataset = base_dataset
-        self.transform = transforms.Compose([
-            transforms.Resize((img_size, img_size)),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.5, 0.5, 0.5],
-                std=[0.5, 0.5, 0.5]
-            )
-        ])
-    
-    def __len__(self):
+    def validate(self, val_loader: DataLoader):
         """
-        Return the number of samples in the dataset.
-
-        Returns:
-            int: Total number of items in the dataset.
-        """
-        return len(self.base_dataset)
-    
-    def __getitem__(self, idx: int):
-        """
-        Retrieve and preprocess a single dataset item.
+        Evaluate the model on the validation set.
 
         Args:
-            idx (int): Index of the sample to retrieve.
+            val_loader (DataLoader): DataLoader supplying validation batches.
 
         Returns:
-            tuple: A tuple ``(image, label)``, where the image has been
-            resized, converted to a tensor, and normalized.
+            tuple: A tuple ``(val_loss, val_acc)`` containing the average
+                validation loss and accuracy.
         """
-        img, label = self.base_dataset[idx]
-        img = self.transform(img)
+        self.model.eval()
+        running_loss = 0.0
+        correct = 0
+        total = 0
         
-        return img, label
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                
+                outputs = self.model(images)
+                loss = self.criterion(outputs, labels)
+                
+                running_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += labels.size(0)
+                correct += predicted.eq(labels).sum().item()
+        
+        val_loss = running_loss / len(val_loader)
+        val_acc = 100 * correct / total
+        
+        return val_loss, val_acc
+
+
+# OPDRACHT: Implementeer de klasse AlexNet, om de classifiatie uit te kunnen voeren.
+
+

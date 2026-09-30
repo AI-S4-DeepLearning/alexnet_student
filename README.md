@@ -1,6 +1,5 @@
 # AlexNet
 
-[//]: # (<XXX> HUGenerateStudentVersion=True)
 
 In deze opdracht gaan we AlexNet toepassen op onderstaande hypothetische kwestie.
 

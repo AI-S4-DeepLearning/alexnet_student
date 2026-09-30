@@ -11,6 +11,5 @@ import pandas as pd
 # - Toon de algehele prestatie (bijvoorbeeld over de verschillende epochs).
 # - Toon de prestaties per klasse (tenminste precision, recall, f1-score, confusion matrix). 
 
-class Plotter:
-    pass
+
         
